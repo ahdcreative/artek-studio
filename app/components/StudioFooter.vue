@@ -28,11 +28,14 @@ const { data: settings } = useStudioSettings();
         <NuxtLink to="/catalog" class="transition hover:text-cyan-300">
           {{ t('Catalog', 'Catalogo') }}
         </NuxtLink>
-        <NuxtLink to="/posts" class="transition hover:text-cyan-300">
-          {{ t('Posts', 'Post') }}
+        <NuxtLink to="/news" class="transition hover:text-cyan-300">
+          {{ t('News', 'News') }}
         </NuxtLink>
         <NuxtLink to="/roadmap" class="transition hover:text-cyan-300">
           {{ t('Roadmap', 'Cantiere') }}
+        </NuxtLink>
+        <NuxtLink to="/admin" class="text-slate-400 transition hover:text-cyan-300">
+          Admin
         </NuxtLink>
         <a
           :href="settings?.patreon_url ?? 'https://www.patreon.com/darkart3k'"

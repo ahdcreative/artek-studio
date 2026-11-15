@@ -58,11 +58,11 @@ const stats = computed(() => {
           </NuxtLink>
 
           <NuxtLink
-            to="/posts"
+            to="/news"
             class="inline-flex items-center gap-2 rounded-xl border border-clinical-border bg-clinical-surface px-5 py-3 text-sm font-semibold text-slate-100 transition hover:border-cyan-500/50 hover:text-cyan-200"
           >
             <ArtekIcons name="MedicalRecordsOutline" size="sm" color="cyan" />
-            <span>{{ t('Release Notes & Previews', 'Post & Anteprime') }}</span>
+            <span>{{ t('Studio News & Previews', 'News & Anteprime') }}</span>
           </NuxtLink>
 
           <a

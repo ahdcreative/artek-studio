@@ -66,6 +66,7 @@ export function useStudioPosts() {
     const { data, error } = await supabase
       .from('studio_posts')
       .select('*')
+      .eq('platform', 'site')
       .eq('is_published', true)
       .order('published_at', { ascending: false });
 

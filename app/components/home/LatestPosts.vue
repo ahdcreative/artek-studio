@@ -17,15 +17,15 @@ const latestPosts = computed(() => (posts.value ?? []).slice(0, 3));
             <span>{{ t('Studio Logbook', 'Diario di Studio') }}</span>
           </div>
           <h2 class="mt-1 text-2xl font-extrabold text-white sm:text-3xl">
-            {{ t('Latest Patreon & CurseForge Posts', 'Ultimi Post Patreon & CurseForge') }}
+            {{ t('Latest Studio News & Releases', 'Ultime News & Rilasci dello Studio') }}
           </h2>
         </div>
 
         <NuxtLink
-          to="/posts"
+          to="/news"
           class="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-300 transition hover:text-cyan-200"
         >
-          <span>{{ t('All posts & previews →', 'Tutti i post e anteprime →') }}</span>
+          <span>{{ t('All studio news →', 'Tutte le news →') }}</span>
         </NuxtLink>
       </div>
 

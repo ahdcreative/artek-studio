@@ -20,6 +20,7 @@ const { data: relatedPosts } = await useAsyncData<StudioPost[]>(`mod-posts-${slu
     .from('studio_posts')
     .select('*')
     .eq('project_slug', slug)
+    .eq('platform', 'site')
     .eq('is_published', true)
     .order('published_at', { ascending: false });
   return data ?? [];

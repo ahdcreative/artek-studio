@@ -28,35 +28,30 @@ const formattedDate = computed(() =>
   <article class="mx-auto max-w-4xl px-4 py-12 sm:px-6 lg:px-8">
     <div class="flex flex-wrap items-center justify-between gap-3">
       <NuxtLink
-        to="/posts"
+        to="/news"
         class="inline-flex items-center gap-1.5 text-xs font-semibold text-cyan-300 transition hover:text-cyan-200"
       >
-        ← {{ t('All Studio Posts', 'Tutti i Post') }}
+        ← {{ t('All Studio News', 'Tutte le News') }}
       </NuxtLink>
 
       <NuxtLink
         v-if="post.project_slug"
         :to="`/mods/${post.project_slug}`"
-        class="rounded-xl border border-cyan-500/35 bg-cyan-500/10 px-3.5 py-1.5 text-xs font-semibold text-cyan-200 transition hover:bg-cyan-500/20"
+        class="rounded-xl border border-emerald-500/35 bg-emerald-500/15 px-3.5 py-1.5 text-xs font-semibold text-emerald-200 transition hover:bg-emerald-500/25"
       >
-        {{ t('View Linked Mod Card →', 'Vai alla Scheda Mod →') }}
+        {{ t('Open Mod Page →', 'Apri Scheda Mod →') }}
       </NuxtLink>
     </div>
 
     <header class="mt-6 space-y-4 border-b border-clinical-border/80 pb-8">
       <div class="flex flex-wrap items-center gap-2.5">
         <span
-          class="rounded-lg border px-2.5 py-1 font-mono text-[11px] font-bold uppercase"
-          :class="
-            post.platform === 'patreon'
-              ? 'border-rose-400/40 bg-rose-500/20 text-rose-200'
-              : 'border-amber-400/40 bg-amber-500/20 text-amber-200'
-          "
+          class="rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-2.5 py-1 font-mono text-[11px] font-bold uppercase text-cyan-200"
         >
-          {{ post.platform }}
+          Studio News
         </span>
         <span
-          class="rounded-lg border border-clinical-border bg-clinical-surface px-2.5 py-1 font-mono text-[11px] uppercase text-cyan-300"
+          class="rounded-lg border border-clinical-border bg-clinical-surface px-2.5 py-1 font-mono text-[11px] uppercase text-slate-300"
         >
           {{ post.post_type }}
         </span>
@@ -111,25 +106,35 @@ const formattedDate = computed(() =>
       v-html="renderedBody"
     />
 
+    <!-- Internal CTA to Linked Mod Card -->
     <div
-      class="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cyan-500/25 bg-cyan-500/10 p-5"
+      class="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-cyan-500/30 bg-cyan-500/10 p-6"
     >
-      <p class="text-sm font-medium text-cyan-100">
-        {{
-          t(
-            'Enjoying ArtekMedical Studio mods? Follow all releases & sneak peeks on Patreon.',
-            'Ti piacciono le mod di ArtekMedical Studio? Segui tutti i rilasci e le anteprime su Patreon.'
-          )
-        }}
-      </p>
-      <a
-        :href="post.external_url || 'https://www.patreon.com/darkart3k'"
-        target="_blank"
-        rel="noopener noreferrer"
-        class="rounded-xl bg-clinical-teal px-4 py-2.5 text-xs font-bold text-white transition hover:bg-cyan-500"
+      <div class="space-y-1">
+        <div class="text-xs font-mono uppercase tracking-wider text-cyan-300">
+          {{ t('Featured Mod in This Article', 'Mod Collegata a Questo Articolo') }}
+        </div>
+        <p class="text-sm font-medium text-slate-200">
+          {{
+            t(
+              'View full technical specifications, preview renders, and direct Patreon & CurseForge download links on the mod page.',
+              'Consulta le specifiche tecniche complete, le immagini di anteprima e i link diretti Patreon e CurseForge nella scheda mod.'
+            )
+          }}
+        </p>
+      </div>
+
+      <NuxtLink
+        :to="post.project_slug ? `/mods/${post.project_slug}` : '/catalog'"
+        class="inline-flex shrink-0 items-center gap-2 rounded-xl bg-clinical-teal px-5 py-3 text-xs font-bold text-white shadow-[0_0_20px_rgba(8,145,178,0.35)] transition hover:bg-cyan-500"
       >
-        patreon.com/darkart3k →
-      </a>
+        <ArtekIcons name="StethoscopeOutline" size="sm" color="white" />
+        <span>{{
+          post.project_slug
+            ? t('Go to Mod Page →', 'Vai alla Scheda Mod →')
+            : t('Browse Mod Catalog →', 'Esplora Catalogo Mod →')
+        }}</span>
+      </NuxtLink>
     </div>
   </article>
 </template>

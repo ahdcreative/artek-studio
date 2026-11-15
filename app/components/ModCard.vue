@@ -22,12 +22,14 @@ const displaySummary = computed(() => {
 </script>
 
 <template>
-  <NuxtLink
-    :to="`/mods/${project.slug}`"
+  <article
     class="group flex flex-col overflow-hidden rounded-2xl border border-clinical-border bg-clinical-surface/90 transition duration-200 hover:-translate-y-0.5 hover:border-cyan-500/50 hover:shadow-[0_12px_36px_rgba(8,145,178,0.14)]"
   >
     <!-- Preview -->
-    <div class="relative aspect-16/10 w-full overflow-hidden bg-clinical-elevated">
+    <NuxtLink
+      :to="`/mods/${project.slug}`"
+      class="relative block aspect-16/10 w-full overflow-hidden bg-clinical-elevated"
+    >
       <img
         v-if="project.preview_url"
         :src="project.preview_url"
@@ -67,11 +69,11 @@ const displaySummary = computed(() => {
           Patreon{{ project.tier_price_eur ? ` €${Number(project.tier_price_eur).toFixed(0)}` : '' }}
         </span>
       </div>
-    </div>
+    </NuxtLink>
 
     <!-- Body -->
     <div class="flex flex-1 flex-col justify-between gap-4 p-5">
-      <div class="space-y-2">
+      <NuxtLink :to="`/mods/${project.slug}`" class="block space-y-2">
         <div class="flex flex-wrap items-center gap-2">
           <span
             class="rounded-full border px-2.5 py-0.5 text-[11px] font-semibold"
@@ -91,16 +93,57 @@ const displaySummary = computed(() => {
         <p class="line-clamp-2 text-xs leading-relaxed text-slate-400">
           {{ displaySummary }}
         </p>
-      </div>
+      </NuxtLink>
 
-      <div class="flex items-center justify-between border-t border-clinical-border/70 pt-3 text-xs">
-        <span class="truncate font-mono text-[11px] text-slate-500">
-          {{ project.modkit_project || 'In Pipeline' }}
-        </span>
-        <span class="shrink-0 font-semibold text-cyan-300 group-hover:translate-x-0.5 transition">
+      <!-- Dual Platform Links + Detail CTA -->
+      <div
+        class="flex flex-wrap items-center justify-between gap-2 border-t border-clinical-border/70 pt-3 text-xs"
+      >
+        <div class="flex flex-wrap items-center gap-1.5">
+          <a
+            v-if="project.patreon_url"
+            :href="project.patreon_url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 rounded-lg border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-200 transition hover:bg-rose-500/25"
+          >
+            <span>Patreon</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+          <span
+            v-else
+            class="inline-flex items-center rounded-lg border border-clinical-border/80 bg-clinical-canvas/60 px-2 py-1 text-[10px] font-medium text-slate-500"
+            :title="t('Patreon link not published yet', 'Link Patreon in arrivo')"
+          >
+            Patreon · {{ t('Soon', 'Presto') }}
+          </span>
+
+          <a
+            v-if="project.curseforge_url"
+            :href="project.curseforge_url"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="inline-flex items-center gap-1 rounded-lg border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-200 transition hover:bg-amber-500/25"
+          >
+            <span>CurseForge</span>
+            <span aria-hidden="true">↗</span>
+          </a>
+          <span
+            v-else
+            class="inline-flex items-center rounded-lg border border-clinical-border/80 bg-clinical-canvas/60 px-2 py-1 text-[10px] font-medium text-slate-500"
+            :title="t('CurseForge link not published yet', 'Link CurseForge in arrivo')"
+          >
+            CurseForge · {{ t('Soon', 'Presto') }}
+          </span>
+        </div>
+
+        <NuxtLink
+          :to="`/mods/${project.slug}`"
+          class="shrink-0 font-semibold text-cyan-300 transition hover:translate-x-0.5 hover:text-cyan-200"
+        >
           {{ t('Inspect →', 'Dettagli →') }}
-        </span>
+        </NuxtLink>
       </div>
     </div>
-  </NuxtLink>
+  </article>
 </template>

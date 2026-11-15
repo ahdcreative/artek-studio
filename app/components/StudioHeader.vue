@@ -1,14 +1,21 @@
 <script setup lang="ts">
 const { lang, toggleLang, t } = useLocale();
+const user = useSupabaseUser();
 const route = useRoute();
 const mobileOpen = ref(false);
 
-const navItems = computed(() => [
-  { to: '/', label: t('Studio', 'Studio') },
-  { to: '/catalog', label: t('Mod Catalog', 'Catalogo Mod') },
-  { to: '/posts', label: t('Posts & Releases', 'Post & Rilasci') },
-  { to: '/roadmap', label: t('Roadmap', 'Cantiere') }
-]);
+const navItems = computed(() => {
+  const base = [
+    { to: '/', label: t('Studio', 'Studio') },
+    { to: '/catalog', label: t('Mod Catalog', 'Catalogo Mod') },
+    { to: '/news', label: t('News', 'News') },
+    { to: '/roadmap', label: t('Roadmap', 'Cantiere') }
+  ];
+  if (user.value) {
+    base.push({ to: '/admin', label: 'Admin' });
+  }
+  return base;
+});
 
 watch(
   () => route.fullPath,
