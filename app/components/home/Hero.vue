@@ -119,7 +119,7 @@ const stats = computed(() => {
             <img
               v-if="settings?.avatar_url"
               :src="settings.avatar_url"
-              alt="Dr. Artek Avatar"
+              alt="Artek (Luca) Avatar"
               class="h-14 w-14 rounded-2xl border border-cyan-500/40 object-cover"
             />
             <div
@@ -131,7 +131,7 @@ const stats = computed(() => {
 
             <div class="min-w-0 flex-1">
               <div class="flex items-center gap-2">
-                <span class="truncate text-sm font-bold text-white">Dr. Artek (Luca Forzutti)</span>
+                <span class="truncate text-sm font-bold text-white">Artek (Luca)</span>
                 <span
                   class="rounded-md bg-cyan-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-cyan-300"
                 >
