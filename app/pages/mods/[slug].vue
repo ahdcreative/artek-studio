@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import type { Database, StudioPost, StudioProject } from '~/types/database.types';
+import { getProjectSummary, getProjectTitle } from '~/composables/useStudioData';
+import type { Database } from '~/types/database.types';
+import type { StudioPost, StudioProject } from '~/types/studio.types';
 
 const route = useRoute();
 const slug = String(route.params.slug);
@@ -17,24 +19,18 @@ if (!project.value) {
 
 const { data: relatedPosts } = await useAsyncData<StudioPost[]>(`mod-posts-${slug}`, async () => {
   const { data } = await supabase
-    .from('studio_posts')
-    .select('*')
-    .eq('project_slug', slug)
-    .eq('platform', 'site')
-    .eq('is_published', true)
-    .order('published_at', { ascending: false });
+      .from('studio_posts')
+      .select('*')
+      .eq('project_slug', slug)
+      .in('platform', ['site', 'patreon'])
+      .eq('is_published', true)
+      .order('published_at', { ascending: false });
   return data ?? [];
 });
 
 useSeoMeta({
-  title: () =>
-    lang.value === 'it' && project.value?.metadata?.raw_title_it
-      ? String(project.value.metadata.raw_title_it)
-      : project.value?.title || '',
-  description: () =>
-    lang.value === 'it'
-      ? project.value?.summary_it || project.value?.notes || ''
-      : project.value?.summary_en || project.value?.notes || ''
+  title: () => (project.value ? getProjectTitle(project.value, lang.value) : ''),
+  description: () => (project.value ? getProjectSummary(project.value, lang.value) : '')
 });
 </script>
 

@@ -2,19 +2,27 @@
 const { t } = useLocale();
 const { data: projects } = useStudioProjects();
 
-const totalProjects = computed(() => projects.value?.length ?? 0);
+const releasedCount = computed(() => (projects.value ?? []).filter((p) => p.status === 3).length);
 
 const featuredMods = computed(() => {
   const list = projects.value ?? [];
   const featured = list.filter((p) => p.featured);
-  return [...featured]
-    .sort((a, b) => {
-      const aImg = a.preview_url ? 0 : 1;
-      const bImg = b.preview_url ? 0 : 1;
-      if (aImg !== bImg) return aImg - bImg;
-      return (a.sort_order ?? 100) - (b.sort_order ?? 100);
-    })
-    .slice(0, 6);
+  const pool = featured.length > 0 ? featured : list;
+
+  return [...pool]
+      .sort((a, b) => {
+        // Always showcase live released mods first
+        const aLive = a.status === 3 ? 0 : 1;
+        const bLive = b.status === 3 ? 0 : 1;
+        if (aLive !== bLive) return aLive - bLive;
+
+        const aImg = a.preview_url ? 0 : 1;
+        const bImg = b.preview_url ? 0 : 1;
+        if (aImg !== bImg) return aImg - bImg;
+
+        return (a.sort_order ?? 100) - (b.sort_order ?? 100);
+      })
+      .slice(0, 6);
 });
 </script>
 
@@ -23,21 +31,26 @@ const featuredMods = computed(() => {
     <div class="mb-8 flex flex-col justify-between gap-4 sm:flex-row sm:items-end">
       <div>
         <div
-          class="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-cyan-400"
+            class="flex items-center gap-2 font-mono text-xs font-semibold uppercase tracking-wider text-cyan-400"
         >
           <ArtekIcons name="HospitalOutline" size="sm" color="cyan" />
-          <span>{{ t('Featured Collection', 'Collezione in Evidenza') }}</span>
+          <span>{{ t('Download Free Today', 'Scarica Gratis Oggi') }}</span>
         </div>
         <h2 class="mt-1 text-2xl font-extrabold text-white sm:text-3xl">
-          {{ t('Signature Medical Gear & Clinic Props', 'Abbigliamento & Strumentario Clinico') }}
+          {{ t('Signature Medical Gear & Clinic Props', 'Divise Sanitarie & Strumentario Clinico') }}
         </h2>
       </div>
 
       <NuxtLink
-        to="/catalog"
-        class="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-300 transition hover:text-cyan-200"
+          to="/catalog"
+          class="inline-flex items-center gap-1.5 text-sm font-semibold text-cyan-300 transition hover:text-cyan-200"
       >
-        <span>{{ t(`View all ${totalProjects} projects →`, `Vedi tutti i ${totalProjects} progetti →`) }}</span>
+        <span>{{
+            t(
+                `Browse all ${releasedCount} live mods →`,
+                `Esplora tutte le ${releasedCount} mod online →`
+            )
+          }}</span>
       </NuxtLink>
     </div>
 
