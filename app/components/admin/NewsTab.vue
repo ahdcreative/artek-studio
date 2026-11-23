@@ -201,6 +201,7 @@ async function saveNews() {
     platform: 'site',
     post_type: form.post_type,
     is_paid: false,
+    is_early_access: false,
     title_it: form.title_it.trim(),
     title_en: form.title_en.trim(),
     summary_it: form.summary_it.trim() || null,
@@ -252,7 +253,9 @@ async function deleteNews(slug: string) {
         class="flex flex-col justify-between gap-4 rounded-2xl border border-rose-500/30 bg-gradient-to-r from-rose-500/10 via-clinical-surface to-clinical-surface p-5 sm:flex-row sm:items-center"
     >
       <div class="space-y-1">
-        <div class="flex items-center gap-2 font-mono text-[11px] font-bold uppercase text-rose-300">
+        <div
+            class="flex items-center gap-2 font-mono text-[11px] font-bold uppercase text-rose-300"
+        >
           <span>Patreon API v2 → Supabase Storage (previews)</span>
         </div>
         <h2 class="text-sm font-bold text-white">
@@ -362,7 +365,7 @@ async function deleteNews(slug: string) {
                     {{ item.post_type }}
                   </span>
                   <span
-                      v-if="item.is_paid"
+                      v-if="item.is_early_access"
                       class="rounded bg-amber-500/20 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-200"
                   >
                     Early Access
@@ -489,7 +492,9 @@ async function deleteNews(slug: string) {
                   v-model="form.project_slug"
                   class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
               >
-                <option value="">{{ t('General Studio / Catalog', 'Generale / Catalogo') }}</option>
+                <option value="">
+                  {{ t('General Studio / Catalog', 'Generale / Catalogo') }}
+                </option>
                 <option v-for="proj in props.projects" :key="proj.slug" :value="proj.slug">
                   {{ proj.slug }} — {{ proj.title }}
                 </option>
@@ -576,7 +581,9 @@ async function deleteNews(slug: string) {
 
             <div class="grid gap-3 sm:grid-cols-2">
               <label class="block space-y-1">
-                <span class="text-[11px] font-semibold text-slate-300">Tags (comma-separated)</span>
+                <span class="text-[11px] font-semibold text-slate-300">
+                  Tags (comma-separated)
+                </span>
                 <input
                     v-model="form.tagsInput"
                     type="text"

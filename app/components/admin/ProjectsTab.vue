@@ -3,7 +3,7 @@ import { getProjectTitle } from '~/composables/useStudioData';
 import type { Database } from '~/types/database.types';
 import type { StudioProject } from '~/types/studio.types';
 
-type ProjectFilterMode = 'ALL' | 'MISSING_LINKS' | 'RELEASED' | 'IN_PROGRESS';
+type ProjectFilterMode = 'ALL' | 'MISSING_LINKS' | 'RELEASED' | 'IN_PROGRESS' | 'EARLY_ACCESS';
 
 const props = defineProps<{
   projects: StudioProject[];
@@ -24,7 +24,8 @@ const filterTabs = computed<ReadonlyArray<{ val: ProjectFilterMode; label: strin
   { val: 'ALL', label: t('All', 'Tutte') },
   { val: 'MISSING_LINKS', label: t('Missing Links', 'Link Mancanti') },
   { val: 'RELEASED', label: t('Released', 'Rilasciate') },
-  { val: 'IN_PROGRESS', label: t('In Development / Soon', 'In Sviluppo / In Arrivo') }
+  { val: 'IN_PROGRESS', label: t('In Development / Soon', 'In Sviluppo / In Arrivo') },
+  { val: 'EARLY_ACCESS', label: 'Early Access' }
 ]);
 
 watch(
@@ -45,6 +46,7 @@ interface EditableProject {
   preview_url: string;
   status: number;
   is_free: boolean;
+  is_early_access: boolean;
   tier_price_eur: string;
   featured: boolean;
   is_published: boolean;
@@ -70,6 +72,7 @@ watch(
           preview_url: p.preview_url || '',
           status: p.status ?? 0,
           is_free: Boolean(p.is_free),
+          is_early_access: Boolean(p.is_early_access),
           tier_price_eur:
               p.tier_price_eur !== null && p.tier_price_eur !== undefined
                   ? String(p.tier_price_eur)
@@ -98,6 +101,9 @@ const filteredDrafts = computed(() => {
         if (filterMode.value === 'IN_PROGRESS' && row.status !== 1 && row.status !== 2) {
           return false;
         }
+        if (filterMode.value === 'EARLY_ACCESS' && !row.is_early_access) {
+          return false;
+        }
         if (!q) return true;
         return (
             row.slug.toLowerCase().includes(q) ||
@@ -112,8 +118,9 @@ async function saveRow(row: EditableProject) {
   row.savedOk = false;
   row.errorMsg = '';
 
+  const needsTierPrice = row.is_early_access || !row.is_free;
   const parsedPrice =
-      !row.is_free && row.tier_price_eur.trim() ? Number(row.tier_price_eur.trim()) : null;
+      needsTierPrice && row.tier_price_eur.trim() ? Number(row.tier_price_eur.trim()) : null;
 
   const { error } = await supabase
       .from('projects')
@@ -123,6 +130,7 @@ async function saveRow(row: EditableProject) {
         preview_url: row.preview_url.trim() || null,
         status: Number(row.status),
         is_free: row.is_free,
+        is_early_access: row.is_early_access,
         tier_price_eur: parsedPrice !== null && !Number.isNaN(parsedPrice) ? parsedPrice : null,
         featured: row.featured,
         is_published: row.is_published
@@ -215,6 +223,12 @@ async function saveRow(row: EditableProject) {
               >
                 {{ row.section }}
               </span>
+              <span
+                  v-if="row.is_early_access"
+                  class="rounded-md bg-amber-500/20 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-200"
+              >
+                Early Access
+              </span>
             </div>
             <p v-if="row.modkit_project" class="mt-1 font-mono text-[11px] text-slate-500">
               ModKit: {{ row.modkit_project }}
@@ -267,7 +281,7 @@ async function saveRow(row: EditableProject) {
             <input
                 v-model="row.preview_url"
                 type="url"
-                placeholder="https://...supabase.co/storage/v1/object/public/preview/..."
+                placeholder="https://...supabase.co/storage/v1/object/public/previews/..."
                 class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white placeholder-slate-600 focus:border-cyan-500 focus:outline-none"
             />
           </label>
@@ -292,7 +306,7 @@ async function saveRow(row: EditableProject) {
               <span class="text-[11px] font-semibold text-slate-300">Early €</span>
               <input
                   v-model="row.tier_price_eur"
-                  :disabled="row.is_free"
+                  :disabled="!row.is_early_access && row.is_free"
                   type="number"
                   step="0.5"
                   min="0"
@@ -301,7 +315,11 @@ async function saveRow(row: EditableProject) {
               />
             </label>
 
-            <div class="flex flex-col justify-end gap-1.5 pb-1 text-[11px] text-slate-300">
+            <div class="flex flex-col justify-end gap-1 pb-0.5 text-[11px] text-slate-300">
+              <label class="inline-flex cursor-pointer items-center gap-1.5 text-amber-200">
+                <input v-model="row.is_early_access" type="checkbox" class="accent-amber-400" />
+                <span>Early Access</span>
+              </label>
               <label class="inline-flex cursor-pointer items-center gap-1.5">
                 <input v-model="row.is_free" type="checkbox" class="accent-cyan-500" />
                 <span>{{ t('Free', 'Gratis') }}</span>

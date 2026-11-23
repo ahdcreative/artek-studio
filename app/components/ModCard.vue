@@ -51,7 +51,13 @@ const displaySummary = computed(() => getProjectSummary(props.project, lang.valu
         </span>
 
         <span
-            v-if="project.is_free"
+            v-if="project.is_early_access"
+            class="rounded-lg border border-amber-400/45 bg-amber-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-100 backdrop-blur"
+        >
+          {{ t('14-Day Early Access', 'Early Access 14gg') }}
+        </span>
+        <span
+            v-else-if="project.is_free"
             class="rounded-lg border border-emerald-400/35 bg-emerald-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-emerald-200 backdrop-blur"
         >
           {{ t('100% Free', '100% Gratis') }}
@@ -60,7 +66,7 @@ const displaySummary = computed(() => getProjectSummary(props.project, lang.valu
             v-else
             class="rounded-lg border border-cyan-400/40 bg-cyan-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-cyan-100 backdrop-blur"
         >
-          {{ t('14-Day Early Access', 'Early Access 14gg') }}
+          {{ t('Early Access Planned', 'Early Access Previsto') }}
         </span>
       </div>
     </NuxtLink>
@@ -110,7 +116,7 @@ const displaySummary = computed(() => getProjectSummary(props.project, lang.valu
               rel="noopener noreferrer"
               class="inline-flex items-center gap-1 rounded-lg border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-200 transition hover:bg-rose-500/25"
           >
-            <span>Patreon</span>
+            <span>{{ project.is_early_access ? 'Early Access' : 'Patreon' }}</span>
             <span aria-hidden="true">↗</span>
           </a>
 

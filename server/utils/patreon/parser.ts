@@ -44,13 +44,23 @@ export function extractPrimaryImageUrl(post: PatreonPostItem): string | null {
     return null;
 }
 
-export function inferPostType(title: string, isPaid: boolean): 'release' | 'preview' | 'update' {
+export function inferPostType(
+    title: string,
+    isEarlyAccess: boolean
+): 'release' | 'preview' | 'update' {
     const lower = title.toLowerCase();
-    if (isPaid || lower.includes('wip') || lower.includes('preview') || lower.includes('early access')) {
+    if (isEarlyAccess || lower.includes('early access')) {
         return 'preview';
     }
-    if (lower.includes('release') || lower.includes('download') || lower.includes('v2') || lower.includes('free')) {
+    if (
+        lower.includes('free release') ||
+        lower.includes('release') ||
+        lower.includes('download')
+    ) {
         return 'release';
+    }
+    if (lower.includes('wip') || lower.includes('preview') || lower.includes('newsletter')) {
+        return 'preview';
     }
     return 'update';
 }

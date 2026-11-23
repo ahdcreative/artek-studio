@@ -84,7 +84,7 @@ const formattedDate = computed(() =>
           {{ post.post_type }}
         </span>
         <span
-            v-if="post.is_paid"
+            v-if="post.is_early_access"
             class="rounded-lg border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 font-mono text-[11px] font-bold uppercase text-amber-200"
         >
           Early Access
@@ -116,7 +116,11 @@ const formattedDate = computed(() =>
           v-if="post.cover_url"
           class="overflow-hidden rounded-3xl border border-clinical-border bg-clinical-canvas"
       >
-        <img :src="post.cover_url" :alt="displayTitle" class="mx-auto max-h-[540px] w-full object-contain" />
+        <img
+            :src="post.cover_url"
+            :alt="displayTitle"
+            class="mx-auto max-h-[540px] w-full object-contain"
+        />
       </div>
 
       <div v-if="extraGalleryImages.length" class="grid gap-4 sm:grid-cols-2">
@@ -163,7 +167,7 @@ const formattedDate = computed(() =>
           class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-rose-400/45 bg-rose-500/20 px-5 py-3 text-xs font-bold text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.18)] transition hover:bg-rose-500/30"
       >
         <span>{{
-            post.is_paid
+            post.is_early_access
                 ? t('Unlock Early Access on Patreon ↗', 'Sblocca Early Access su Patreon ↗')
                 : t('Read Full Post on Patreon ↗', 'Leggi Post Completo su Patreon ↗')
           }}</span>

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import type { Database } from '~/types/database.types';
+import type { Database, Json } from '~/types/database.types';
 import type { StudioPost, StudioProject } from '~/types/studio.types';
 
 const STORAGE_BUCKET = 'previews';
@@ -30,6 +30,8 @@ const { t } = useLocale();
 const fileInputRef = ref<HTMLInputElement | null>(null);
 const coverUrl = ref('');
 const projectSlug = ref('');
+const postType = ref('release');
+const isEarlyAccess = ref(false);
 const isPublished = ref(true);
 
 const uploading = ref(false);
@@ -42,6 +44,8 @@ watch(
     (item) => {
       coverUrl.value = item.cover_url || '';
       projectSlug.value = item.project_slug || '';
+      postType.value = item.post_type || 'release';
+      isEarlyAccess.value = Boolean(item.is_early_access);
       isPublished.value = item.is_published;
       feedback.value = '';
       errorMsg.value = '';
@@ -54,6 +58,13 @@ const patreonPostId = computed(() =>
         ? props.post.slug.slice('patreon-'.length)
         : props.post.slug
 );
+
+function withEditorialOverride(raw: Json): Json {
+  if (raw && typeof raw === 'object' && !Array.isArray(raw)) {
+    return { ...raw, editorial_override: true };
+  }
+  return { editorial_override: true };
+}
 
 function triggerFileDialog() {
   fileInputRef.value?.click();
@@ -71,7 +82,11 @@ async function persistChanges(nextCoverUrl?: string) {
       .update({
         cover_url: targetCover,
         project_slug: projectSlug.value || null,
+        post_type: postType.value,
+        is_early_access: isEarlyAccess.value,
+        tier_name: isEarlyAccess.value ? 'Chief of Medicine / Early Access' : null,
         is_published: isPublished.value,
+        metadata: withEditorialOverride(props.post.metadata),
         updated_at: new Date().toISOString()
       })
       .eq('slug', props.post.slug);
@@ -148,10 +163,14 @@ async function handleFileChange(event: Event) {
 
 <template>
   <div class="rounded-2xl border border-rose-500/35 bg-clinical-surface/90 p-5">
-    <div class="flex flex-wrap items-start justify-between gap-3 border-b border-clinical-border/70 pb-4">
+    <div
+        class="flex flex-wrap items-start justify-between gap-3 border-b border-clinical-border/70 pb-4"
+    >
       <div class="min-w-0 space-y-1">
         <div class="flex flex-wrap items-center gap-2">
-          <span class="rounded bg-rose-500/20 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-rose-200">
+          <span
+              class="rounded bg-rose-500/20 px-2 py-0.5 font-mono text-[10px] font-bold uppercase text-rose-200"
+          >
             Patreon Post
           </span>
           <span class="font-mono text-[10px] text-slate-400">
@@ -261,14 +280,37 @@ async function handleFileChange(event: Event) {
               v-model="projectSlug"
               class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
           >
-            <option value="">{{ t('None (General Studio Post)', 'Nessuna (Post Generale)') }}</option>
+            <option value="">
+              {{ t('None (General Studio Post)', 'Nessuna (Post Generale)') }}
+            </option>
             <option v-for="proj in props.projects" :key="proj.slug" :value="proj.slug">
               {{ proj.slug }} — {{ proj.title }}
             </option>
           </select>
         </label>
 
-        <label class="flex items-end pb-2 text-xs font-medium text-slate-200">
+        <label class="block space-y-1">
+          <span class="text-[11px] font-semibold text-slate-300">
+            {{ t('Post Type', 'Tipo Post') }}
+          </span>
+          <select
+              v-model="postType"
+              class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+          >
+            <option value="release">release</option>
+            <option value="preview">preview</option>
+            <option value="update">update</option>
+          </select>
+        </label>
+      </div>
+
+      <div class="flex flex-wrap items-center gap-6 pt-1">
+        <label class="flex items-center text-xs font-semibold text-amber-200">
+          <input v-model="isEarlyAccess" type="checkbox" class="mr-2 accent-amber-400" />
+          <span>{{ t('Early Access (14-Day Tier)', 'Early Access (Tier 14gg)') }}</span>
+        </label>
+
+        <label class="flex items-center text-xs font-medium text-slate-200">
           <input v-model="isPublished" type="checkbox" class="mr-2 accent-cyan-500" />
           <span>{{ t('Visible on art3k.org', 'Visibile su art3k.org') }}</span>
         </label>

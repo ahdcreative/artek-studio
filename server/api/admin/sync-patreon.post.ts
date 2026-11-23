@@ -1,3 +1,4 @@
+import type { Json } from '~/types/database.types';
 import { resolvePatreonAuth } from '../../utils/patreon/auth';
 import { mirrorPatreonCoverToStorage } from '../../utils/patreon/media';
 import {
@@ -13,10 +14,20 @@ interface ExistingPostSnapshot {
     cover_url: string | null;
     project_slug: string | null;
     is_published: boolean;
+    is_early_access: boolean;
+    post_type: string;
+    metadata: Json;
 }
 
 function readConfigString(value: unknown, fallback = ''): string {
     return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
+}
+
+function hasEditorialOverride(metadata: Json | undefined): boolean {
+    if (!metadata || typeof metadata !== 'object' || Array.isArray(metadata)) {
+        return false;
+    }
+    return metadata.editorial_override === true;
 }
 
 async function fetchPatreonPostsPage(
@@ -92,14 +103,17 @@ export default defineEventHandler(async (event): Promise<PatreonSyncResult> => {
     if (slugs.length > 0) {
         const { data: existingRows } = await supabaseAdmin
             .from('studio_posts')
-            .select('slug, cover_url, project_slug, is_published')
+            .select('slug, cover_url, project_slug, is_published, is_early_access, post_type, metadata')
             .in('slug', slugs);
 
         for (const row of existingRows ?? []) {
             existingMap.set(row.slug, {
                 cover_url: row.cover_url,
                 project_slug: row.project_slug,
-                is_published: row.is_published
+                is_published: row.is_published,
+                is_early_access: row.is_early_access,
+                post_type: row.post_type,
+                metadata: row.metadata
             });
         }
     }
@@ -115,11 +129,17 @@ export default defineEventHandler(async (event): Promise<PatreonSyncResult> => {
 
         const slug = `patreon-${item.id}`;
         const existing = existingMap.get(slug);
+        const manualOverride = hasEditorialOverride(existing?.metadata);
         const title = (item.attributes.title || 'Artek Medical Update').trim();
-        const isPaid = item.attributes.is_public === false || Boolean(item.attributes.is_paid);
+
+        // Only treat Patreon's explicit paid flag as paid; free-member posts are not Early Access
+        const isPaid = Boolean(item.attributes.is_paid);
+        const finalIsEarlyAccess = manualOverride && existing ? existing.is_early_access : isPaid;
+        const finalPostType =
+            manualOverride && existing ? existing.post_type : inferPostType(title, finalIsEarlyAccess);
+
         const teaser = buildTeaserSummary(item.attributes.content);
         const externalUrl = normalizePatreonPostUrl(item.attributes.url, item.id);
-        const postType = inferPostType(title, isPaid);
 
         let finalCoverUrl = existing?.cover_url ?? null;
 
@@ -144,14 +164,21 @@ export default defineEventHandler(async (event): Promise<PatreonSyncResult> => {
             teaser ||
             'Read the full update, previews, and devlog directly on the Artek Medical Patreon page.';
 
+        const nextMetadata: Json = {
+            patreon_post_id: item.id,
+            synced_at: new Date().toISOString(),
+            ...(manualOverride ? { editorial_override: true } : {})
+        };
+
         const { error: upsertError } = await supabaseAdmin.from('studio_posts').upsert(
             {
                 slug,
                 project_slug: existing?.project_slug ?? null,
                 platform: 'patreon',
-                post_type: postType,
+                post_type: finalPostType,
                 is_paid: isPaid,
-                tier_name: isPaid ? 'Chief of Medicine / Early Access' : null,
+                is_early_access: finalIsEarlyAccess,
+                tier_name: finalIsEarlyAccess ? 'Chief of Medicine / Early Access' : null,
                 title_en: title,
                 title_it: title,
                 summary_en: teaser || null,
@@ -161,13 +188,10 @@ export default defineEventHandler(async (event): Promise<PatreonSyncResult> => {
                 cover_url: finalCoverUrl,
                 gallery_urls: [],
                 external_url: externalUrl,
-                tags: isPaid ? ['patreon', 'early-access'] : ['patreon', 'free-update'],
+                tags: finalIsEarlyAccess ? ['patreon', 'early-access'] : ['patreon', 'free-update'],
                 published_at: item.attributes.published_at,
                 is_published: existing ? existing.is_published : true,
-                metadata: {
-                    patreon_post_id: item.id,
-                    synced_at: new Date().toISOString()
-                }
+                metadata: nextMetadata
             },
             { onConflict: 'slug' }
         );

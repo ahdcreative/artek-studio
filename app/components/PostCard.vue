@@ -44,7 +44,7 @@ const ctaLabel = computed(() => {
   if (!isPatreon.value) {
     return t('Read news →', 'Leggi news →');
   }
-  return props.post.is_paid
+  return props.post.is_early_access
       ? t('Early Access on Patreon ↗', 'Early Access su Patreon ↗')
       : t('Read on Patreon ↗', 'Leggi su Patreon ↗');
 });
@@ -105,7 +105,7 @@ const ctaLabel = computed(() => {
         </div>
 
         <span
-            v-if="post.is_paid"
+            v-if="post.is_early_access"
             class="rounded-lg border border-amber-400/45 bg-amber-500/20 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-amber-100 backdrop-blur"
         >
           {{ t('Early Access', 'Early Access') }}

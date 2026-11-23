@@ -48,6 +48,7 @@ export type Database = {
           curseforge_url: string | null
           featured: boolean | null
           id: string
+          is_early_access: boolean
           is_free: boolean
           is_published: boolean | null
           metadata: Json | null
@@ -72,6 +73,7 @@ export type Database = {
           curseforge_url?: string | null
           featured?: boolean | null
           id?: string
+          is_early_access?: boolean
           is_free?: boolean
           is_published?: boolean | null
           metadata?: Json | null
@@ -96,6 +98,7 @@ export type Database = {
           curseforge_url?: string | null
           featured?: boolean | null
           id?: string
+          is_early_access?: boolean
           is_free?: boolean
           is_published?: boolean | null
           metadata?: Json | null
@@ -179,6 +182,7 @@ export type Database = {
           external_url: string | null
           gallery_urls: Json
           id: string
+          is_early_access: boolean
           is_paid: boolean
           is_published: boolean
           metadata: Json
@@ -203,6 +207,7 @@ export type Database = {
           external_url?: string | null
           gallery_urls?: Json
           id?: string
+          is_early_access?: boolean
           is_paid?: boolean
           is_published?: boolean
           metadata?: Json
@@ -227,6 +232,7 @@ export type Database = {
           external_url?: string | null
           gallery_urls?: Json
           id?: string
+          is_early_access?: boolean
           is_paid?: boolean
           is_published?: boolean
           metadata?: Json

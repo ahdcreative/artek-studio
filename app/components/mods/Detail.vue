@@ -25,6 +25,15 @@ const patreonTargetUrl = computed(
     () => props.project.patreon_url || settings.value?.patreon_url || DEFAULT_PATREON_URL
 );
 
+const patreonCtaLabel = computed(() => {
+  if (props.project.is_early_access) {
+    return t('Unlock Early Access on Patreon ↗', 'Sblocca Early Access su Patreon ↗');
+  }
+  return props.project.patreon_url
+      ? t('Open Devlog Post ↗', 'Apri Post su Patreon ↗')
+      : t('Follow FREE for Updates ↗', 'Segui GRATIS su Patreon ↗');
+});
+
 const galleryImages = computed(() => {
   const urls = new Set<string>();
   if (props.project.preview_url) urls.add(props.project.preview_url);
@@ -70,7 +79,13 @@ const galleryImages = computed(() => {
             </span>
 
             <span
-                v-if="project.is_free"
+                v-if="project.is_early_access"
+                class="rounded-full border border-amber-400/40 bg-amber-500/15 px-3 py-1 text-xs font-bold text-amber-200"
+            >
+              {{ t('14-Day Early Access (Then Free)', 'Early Access 14gg (Poi Gratis)') }}
+            </span>
+            <span
+                v-else-if="project.is_free"
                 class="rounded-full border border-emerald-500/35 bg-emerald-500/15 px-3 py-1 text-xs font-bold text-emerald-300"
             >
               {{ t('100% Free Mod', 'Mod 100% Gratuita') }}
@@ -79,7 +94,7 @@ const galleryImages = computed(() => {
                 v-else
                 class="rounded-full border border-cyan-500/35 bg-cyan-500/15 px-3 py-1 text-xs font-bold text-cyan-200"
             >
-              {{ t('14-Day Early Access (Then Free)', 'Early Access 14gg (Poi Gratis)') }}
+              {{ t('Early Access Planned (Then Free)', 'Early Access Previsto (Poi Gratis)') }}
             </span>
           </div>
 
@@ -126,7 +141,11 @@ const galleryImages = computed(() => {
                 class="inline-flex items-center justify-between gap-2 rounded-xl border border-clinical-border/80 bg-clinical-canvas/60 px-4 py-3 text-xs font-medium text-slate-400"
             >
               <span>CurseForge</span>
-              <span>{{ t('Release coming soon', 'Rilascio in arrivo') }}</span>
+              <span>{{
+                  project.is_early_access
+                      ? t('Free after 14-day Early Access', 'Gratis dopo i 14gg di Early Access')
+                      : t('Release coming soon', 'Rilascio in arrivo')
+                }}</span>
             </div>
 
             <a
@@ -136,13 +155,7 @@ const galleryImages = computed(() => {
                 class="inline-flex items-center justify-between gap-2 rounded-xl border border-rose-400/45 bg-rose-500/20 px-4 py-3 text-sm font-bold text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.16)] transition hover:bg-rose-500/30"
             >
               <span>Patreon</span>
-              <span class="text-xs font-semibold">
-                {{
-                  project.patreon_url
-                      ? t('Open Devlog Post ↗', 'Apri Post su Patreon ↗')
-                      : t('Follow FREE for Updates ↗', 'Segui GRATIS su Patreon ↗')
-                }}
-              </span>
+              <span class="text-xs font-semibold">{{ patreonCtaLabel }}</span>
             </a>
           </div>
         </div>
@@ -169,7 +182,12 @@ const galleryImages = computed(() => {
               <dd class="font-mono text-cyan-300">{{ project.modkit_project }}</dd>
             </div>
             <div v-if="user && project.notes" class="flex justify-between gap-4 py-2">
-              <dt class="text-slate-400">Admin Notes</dt>
+              <dt class="flex items-center gap-1.5 text-slate-400">
+                <span>Admin Notes</span>
+                <span class="rounded bg-cyan-500/15 px-1.5 py-0.5 font-mono text-[9px] text-cyan-300">
+                  Admin only
+                </span>
+              </dt>
               <dd class="max-w-[62%] text-right text-slate-200">{{ project.notes }}</dd>
             </div>
           </dl>
