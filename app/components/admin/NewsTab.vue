@@ -24,8 +24,9 @@ const emit = defineEmits<{
 const supabase = useSupabaseClient<Database>();
 const { t } = useLocale();
 
-const newsList = ref<StudioPost[]>([]);
+const newsList = shallowRef<StudioPost[]>([]);
 const platformFilter = ref<PlatformFilter>('all');
+const selectedPatreonSlug = ref('');
 const loadingList = ref(false);
 const saving = ref(false);
 const syncingPatreon = ref(false);
@@ -41,9 +42,14 @@ const filterOptions = computed<ReadonlyArray<{ id: PlatformFilter; label: string
   { id: 'site', label: t('Site', 'Sito') }
 ]);
 
-const filteredNewsList = computed(() => {
+const filteredNewsList = computed<StudioPost[]>(() => {
   if (platformFilter.value === 'all') return newsList.value;
-  return newsList.value.filter((item) => item.platform === platformFilter.value);
+  return newsList.value.filter((item: StudioPost) => item.platform === platformFilter.value);
+});
+
+const selectedPatreonPost = computed<StudioPost | null>(() => {
+  if (!selectedPatreonSlug.value) return null;
+  return newsList.value.find((item: StudioPost) => item.slug === selectedPatreonSlug.value) ?? null;
 });
 
 const emptyForm = () => ({
@@ -104,8 +110,8 @@ async function triggerPatreonSync() {
     });
 
     syncMessage.value = t(
-        `Synced ${res.syncedCount}/${res.totalFetched} Patreon posts (${res.mediaMirrored} covers saved to "preview", ${res.mediaSkipped} cached).`,
-        `Sincronizzati ${res.syncedCount}/${res.totalFetched} post Patreon (${res.mediaMirrored} cover salvate su "preview", ${res.mediaSkipped} già presenti).`
+        `Synced ${res.syncedCount}/${res.totalFetched} Patreon posts (${res.mediaMirrored} covers saved to "previews", ${res.mediaSkipped} cached).`,
+        `Sincronizzati ${res.syncedCount}/${res.totalFetched} post Patreon (${res.mediaMirrored} cover salvate su "previews", ${res.mediaSkipped} già presenti).`
     );
 
     if (res.errors.length > 0) {
@@ -122,13 +128,21 @@ async function triggerPatreonSync() {
 }
 
 function startCreate() {
+  selectedPatreonSlug.value = '';
   Object.assign(form, emptyForm());
   isEditingExisting.value = false;
   feedback.value = '';
   errorMsg.value = '';
 }
 
+function openPatreonPanel(item: StudioPost) {
+  selectedPatreonSlug.value = item.slug;
+  feedback.value = '';
+  errorMsg.value = '';
+}
+
 function loadIntoEditor(item: StudioPost) {
+  selectedPatreonSlug.value = '';
   form.slug = item.slug;
   form.project_slug = item.project_slug || '';
   form.post_type = item.post_type || 'release';
@@ -144,6 +158,11 @@ function loadIntoEditor(item: StudioPost) {
   isEditingExisting.value = true;
   feedback.value = '';
   errorMsg.value = '';
+}
+
+async function handlePatreonPostSaved() {
+  await loadNews();
+  emit('updated');
 }
 
 async function saveNews() {
@@ -220,6 +239,7 @@ async function deleteNews(slug: string) {
     return;
   }
   if (form.slug === slug) startCreate();
+  if (selectedPatreonSlug.value === slug) selectedPatreonSlug.value = '';
   await loadNews();
   emit('updated');
 }
@@ -227,12 +247,13 @@ async function deleteNews(slug: string) {
 
 <template>
   <div class="space-y-6">
+    <!-- Patreon Sync Header -->
     <div
         class="flex flex-col justify-between gap-4 rounded-2xl border border-rose-500/30 bg-gradient-to-r from-rose-500/10 via-clinical-surface to-clinical-surface p-5 sm:flex-row sm:items-center"
     >
       <div class="space-y-1">
         <div class="flex items-center gap-2 font-mono text-[11px] font-bold uppercase text-rose-300">
-          <span>Patreon API v2 → Supabase Storage (preview)</span>
+          <span>Patreon API v2 → Supabase Storage (previews)</span>
         </div>
         <h2 class="text-sm font-bold text-white">
           {{ t('Import Latest Patreon Posts', 'Sincronizza Post da Patreon') }}
@@ -240,8 +261,8 @@ async function deleteNews(slug: string) {
         <p class="text-xs text-slate-400">
           {{
             t(
-                'Fetches your Patreon posts as teaser cards, mirrors covers into the "preview" bucket, and links directly to Patreon.',
-                'Importa i post di Patreon come card teaser, copia le cover nel bucket "preview" e linka direttamente a Patreon.'
+                'Fetches your Patreon posts as teaser cards, mirrors covers into the "previews" bucket, and links directly to Patreon.',
+                'Importa i post di Patreon come card teaser, copia le cover nel bucket "previews" e linka direttamente a Patreon.'
             )
           }}
         </p>
@@ -275,6 +296,7 @@ async function deleteNews(slug: string) {
     </p>
 
     <div class="grid gap-6 lg:grid-cols-12">
+      <!-- Left List -->
       <div class="space-y-3 lg:col-span-5">
         <div class="flex flex-wrap items-center justify-between gap-2">
           <h2 class="text-sm font-bold text-white">
@@ -314,10 +336,15 @@ async function deleteNews(slug: string) {
           <div
               v-for="item in filteredNewsList"
               :key="item.slug"
-              class="rounded-2xl border border-clinical-border bg-clinical-surface/90 p-4"
+              class="rounded-2xl border bg-clinical-surface/90 p-4 transition"
+              :class="
+              selectedPatreonSlug === item.slug
+                ? 'border-rose-400/60 ring-1 ring-rose-400/30'
+                : 'border-clinical-border'
+            "
           >
             <div class="flex items-start justify-between gap-2">
-              <div>
+              <div class="min-w-0">
                 <div class="flex flex-wrap items-center gap-1.5">
                   <span
                       class="rounded px-2 py-0.5 font-mono text-[10px] font-bold uppercase"
@@ -341,28 +368,46 @@ async function deleteNews(slug: string) {
                     Early Access
                   </span>
                   <span
+                      v-if="!item.cover_url"
+                      class="rounded bg-amber-500/15 px-2 py-0.5 font-mono text-[10px] font-semibold text-amber-300"
+                  >
+                    {{ t('No cover', 'Senza cover') }}
+                  </span>
+                  <span
                       v-if="!item.is_published"
                       class="rounded bg-slate-500/20 px-2 py-0.5 font-mono text-[10px] text-slate-300"
                   >
-                    Draft
+                    Hidden
                   </span>
                 </div>
-                <h3 class="mt-1.5 text-xs font-bold text-white">{{ item.title_en || item.title_it }}</h3>
-                <p class="mt-0.5 font-mono text-[10px] text-slate-500">
+                <h3 class="mt-1.5 text-xs font-bold text-white">
+                  {{ item.title_en || item.title_it }}
+                </h3>
+                <p class="mt-0.5 truncate font-mono text-[10px] text-slate-500">
                   {{ item.slug }}
+                  <span v-if="item.project_slug"> → {{ item.project_slug }}</span>
                 </p>
               </div>
             </div>
 
             <div class="mt-3 flex flex-wrap items-center gap-2 text-[11px]">
               <button
-                  v-if="item.platform === 'site'"
+                  v-if="item.platform === 'patreon'"
+                  type="button"
+                  class="rounded-lg border border-cyan-500/35 bg-cyan-500/10 px-2.5 py-1 font-semibold text-cyan-300 hover:bg-cyan-500/20"
+                  @click="openPatreonPanel(item)"
+              >
+                {{ t('Cover & Mod', 'Cover & Mod') }}
+              </button>
+              <button
+                  v-else
                   type="button"
                   class="rounded-lg border border-cyan-500/35 bg-cyan-500/10 px-2.5 py-1 font-semibold text-cyan-300 hover:bg-cyan-500/20"
                   @click="loadIntoEditor(item)"
               >
                 {{ t('Edit', 'Modifica') }}
               </button>
+
               <a
                   v-if="item.platform === 'patreon' && item.external_url"
                   :href="item.external_url"
@@ -402,150 +447,164 @@ async function deleteNews(slug: string) {
         </div>
       </div>
 
-      <div class="rounded-2xl border border-clinical-border bg-clinical-surface/90 p-5 lg:col-span-7">
-        <h2 class="text-base font-bold text-white">
-          {{
-            isEditingExisting
-                ? t('Edit Site News Article', 'Modifica Articolo News')
-                : t('Create Manual Site Article (Optional)', 'Crea Articolo Manuale (Opzionale)')
-          }}
-        </h2>
+      <!-- Right Column: Patreon Override Panel OR Manual Site Article Editor -->
+      <div class="lg:col-span-7">
+        <AdminPatreonPostPanel
+            v-if="selectedPatreonPost"
+            :post="selectedPatreonPost"
+            :projects="props.projects"
+            @saved="handlePatreonPostSaved"
+            @close="selectedPatreonSlug = ''"
+        />
 
-        <div class="mt-4 grid gap-3 sm:grid-cols-2">
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">News Slug</span>
-            <input
-                v-model="form.slug"
-                :disabled="isEditingExisting"
-                type="text"
-                placeholder="news-new-mod-release"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white disabled:opacity-60 focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
+        <div
+            v-else
+            class="rounded-2xl border border-clinical-border bg-clinical-surface/90 p-5"
+        >
+          <h2 class="text-base font-bold text-white">
+            {{
+              isEditingExisting
+                  ? t('Edit Site News Article', 'Modifica Articolo News')
+                  : t('Create Manual Site Article (Optional)', 'Crea Articolo Manuale (Opzionale)')
+            }}
+          </h2>
 
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-emerald-300">
-              {{ t('Linked Internal Mod', 'Mod Collegata sul Sito') }}
-            </span>
-            <select
-                v-model="form.project_slug"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
-            >
-              <option value="">{{ t('General Studio / Catalog', 'Generale / Catalogo') }}</option>
-              <option v-for="proj in props.projects" :key="proj.slug" :value="proj.slug">
-                {{ proj.slug }} — {{ proj.title }}
-              </option>
-            </select>
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">Type</span>
-            <select
-                v-model="form.post_type"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
-            >
-              <option value="release">release</option>
-              <option value="preview">preview</option>
-              <option value="update">update</option>
-            </select>
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">Cover Image URL</span>
-            <input
-                v-model="form.cover_url"
-                type="url"
-                placeholder="https://...supabase.co/storage/v1/object/public/preview/..."
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">Titolo (IT)</span>
-            <input
-                v-model="form.title_it"
-                type="text"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">Title (EN)</span>
-            <input
-                v-model="form.title_en"
-                type="text"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">Riassunto (IT)</span>
-            <textarea
-                v-model="form.summary_it"
-                rows="2"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">Summary (EN)</span>
-            <textarea
-                v-model="form.summary_en"
-                rows="2"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
-        </div>
-
-        <div class="mt-3 space-y-3">
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">Testo Markdown (IT)</span>
-            <textarea
-                v-model="form.body_it"
-                rows="4"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 font-mono text-xs text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
-
-          <label class="block space-y-1">
-            <span class="text-[11px] font-semibold text-slate-300">Markdown Body (EN)</span>
-            <textarea
-                v-model="form.body_en"
-                rows="4"
-                class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 font-mono text-xs text-white focus:border-cyan-500 focus:outline-none"
-            />
-          </label>
-
-          <div class="grid gap-3 sm:grid-cols-2">
+          <div class="mt-4 grid gap-3 sm:grid-cols-2">
             <label class="block space-y-1">
-              <span class="text-[11px] font-semibold text-slate-300">Tags (comma-separated)</span>
+              <span class="text-[11px] font-semibold text-slate-300">News Slug</span>
               <input
-                  v-model="form.tagsInput"
+                  v-model="form.slug"
+                  :disabled="isEditingExisting"
                   type="text"
-                  placeholder="caz, footwear, free-mod"
+                  placeholder="news-new-mod-release"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white disabled:opacity-60 focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
+
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-emerald-300">
+                {{ t('Linked Internal Mod', 'Mod Collegata sul Sito') }}
+              </span>
+              <select
+                  v-model="form.project_slug"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+              >
+                <option value="">{{ t('General Studio / Catalog', 'Generale / Catalogo') }}</option>
+                <option v-for="proj in props.projects" :key="proj.slug" :value="proj.slug">
+                  {{ proj.slug }} — {{ proj.title }}
+                </option>
+              </select>
+            </label>
+
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-slate-300">Type</span>
+              <select
+                  v-model="form.post_type"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+              >
+                <option value="release">release</option>
+                <option value="preview">preview</option>
+                <option value="update">update</option>
+              </select>
+            </label>
+
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-slate-300">Cover Image URL</span>
+              <input
+                  v-model="form.cover_url"
+                  type="url"
+                  placeholder="https://...supabase.co/storage/v1/object/public/previews/..."
                   class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
               />
             </label>
 
-            <label class="flex items-end pb-2 text-xs font-medium text-slate-200">
-              <input v-model="form.is_published" type="checkbox" class="mr-2 accent-cyan-500" />
-              <span>{{ t('Published on art3k.org', 'Pubblicata su art3k.org') }}</span>
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-slate-300">Titolo (IT)</span>
+              <input
+                  v-model="form.title_it"
+                  type="text"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
+
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-slate-300">Title (EN)</span>
+              <input
+                  v-model="form.title_en"
+                  type="text"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
+
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-slate-300">Riassunto (IT)</span>
+              <textarea
+                  v-model="form.summary_it"
+                  rows="2"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
+
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-slate-300">Summary (EN)</span>
+              <textarea
+                  v-model="form.summary_en"
+                  rows="2"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+              />
             </label>
           </div>
-        </div>
 
-        <p v-if="errorMsg" class="mt-3 text-xs text-rose-300">{{ errorMsg }}</p>
-        <p v-if="feedback" class="mt-3 text-xs font-semibold text-emerald-300">{{ feedback }}</p>
+          <div class="mt-3 space-y-3">
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-slate-300">Testo Markdown (IT)</span>
+              <textarea
+                  v-model="form.body_it"
+                  rows="4"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 font-mono text-xs text-white focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
 
-        <div class="mt-4 flex items-center justify-end gap-3">
-          <button
-              type="button"
-              :disabled="saving"
-              class="rounded-xl bg-clinical-teal px-5 py-2.5 text-xs font-bold text-white transition hover:bg-cyan-500 disabled:opacity-50"
-              @click="saveNews"
-          >
-            {{ saving ? t('Saving...', 'Salvataggio...') : t('Save News Article', 'Salva News') }}
-          </button>
+            <label class="block space-y-1">
+              <span class="text-[11px] font-semibold text-slate-300">Markdown Body (EN)</span>
+              <textarea
+                  v-model="form.body_en"
+                  rows="4"
+                  class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 font-mono text-xs text-white focus:border-cyan-500 focus:outline-none"
+              />
+            </label>
+
+            <div class="grid gap-3 sm:grid-cols-2">
+              <label class="block space-y-1">
+                <span class="text-[11px] font-semibold text-slate-300">Tags (comma-separated)</span>
+                <input
+                    v-model="form.tagsInput"
+                    type="text"
+                    placeholder="caz, footwear, free-mod"
+                    class="w-full rounded-xl border border-clinical-border bg-clinical-canvas px-3 py-2 text-xs text-white focus:border-cyan-500 focus:outline-none"
+                />
+              </label>
+
+              <label class="flex items-end pb-2 text-xs font-medium text-slate-200">
+                <input v-model="form.is_published" type="checkbox" class="mr-2 accent-cyan-500" />
+                <span>{{ t('Published on art3k.org', 'Pubblicata su art3k.org') }}</span>
+              </label>
+            </div>
+          </div>
+
+          <p v-if="errorMsg" class="mt-3 text-xs text-rose-300">{{ errorMsg }}</p>
+          <p v-if="feedback" class="mt-3 text-xs font-semibold text-emerald-300">{{ feedback }}</p>
+
+          <div class="mt-4 flex items-center justify-end gap-3">
+            <button
+                type="button"
+                :disabled="saving"
+                class="rounded-xl bg-clinical-teal px-5 py-2.5 text-xs font-bold text-white transition hover:bg-cyan-500 disabled:opacity-50"
+                @click="saveNews"
+            >
+              {{ saving ? t('Saving...', 'Salvataggio...') : t('Save News Article', 'Salva News') }}
+            </button>
+          </div>
         </div>
       </div>
     </div>

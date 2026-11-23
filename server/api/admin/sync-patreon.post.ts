@@ -9,6 +9,12 @@ import {
 import { getAdminSupabase } from '../../utils/patreon/supabase';
 import type { PatreonPostsResponse, PatreonSyncResult } from '../../utils/patreon/types';
 
+interface ExistingPostSnapshot {
+    cover_url: string | null;
+    project_slug: string | null;
+    is_published: boolean;
+}
+
 function readConfigString(value: unknown, fallback = ''): string {
     return typeof value === 'string' && value.trim().length > 0 ? value.trim() : fallback;
 }
@@ -81,20 +87,24 @@ export default defineEventHandler(async (event): Promise<PatreonSyncResult> => {
     const items = payload.data ?? [];
 
     const slugs = items.map((item) => `patreon-${item.id}`);
-    const existingMap = new Map<string, { cover_url: string | null }>();
+    const existingMap = new Map<string, ExistingPostSnapshot>();
 
     if (slugs.length > 0) {
         const { data: existingRows } = await supabaseAdmin
             .from('studio_posts')
-            .select('slug, cover_url')
+            .select('slug, cover_url, project_slug, is_published')
             .in('slug', slugs);
 
         for (const row of existingRows ?? []) {
-            existingMap.set(row.slug, { cover_url: row.cover_url });
+            existingMap.set(row.slug, {
+                cover_url: row.cover_url,
+                project_slug: row.project_slug,
+                is_published: row.is_published
+            });
         }
     }
 
-    const bucket = readConfigString(config.supabaseStorageBucket, 'preview');
+    const bucket = readConfigString(config.supabaseStorageBucket, 'previews');
     let syncedCount = 0;
     let mediaMirrored = 0;
     let mediaSkipped = 0;
@@ -104,13 +114,14 @@ export default defineEventHandler(async (event): Promise<PatreonSyncResult> => {
         if (!item.attributes.published_at) continue;
 
         const slug = `patreon-${item.id}`;
+        const existing = existingMap.get(slug);
         const title = (item.attributes.title || 'Artek Medical Update').trim();
         const isPaid = item.attributes.is_public === false || Boolean(item.attributes.is_paid);
         const teaser = buildTeaserSummary(item.attributes.content);
         const externalUrl = normalizePatreonPostUrl(item.attributes.url, item.id);
         const postType = inferPostType(title, isPaid);
 
-        let finalCoverUrl = existingMap.get(slug)?.cover_url ?? null;
+        let finalCoverUrl = existing?.cover_url ?? null;
 
         try {
             const sourceImg = extractPrimaryImageUrl(item);
@@ -136,7 +147,7 @@ export default defineEventHandler(async (event): Promise<PatreonSyncResult> => {
         const { error: upsertError } = await supabaseAdmin.from('studio_posts').upsert(
             {
                 slug,
-                project_slug: null,
+                project_slug: existing?.project_slug ?? null,
                 platform: 'patreon',
                 post_type: postType,
                 is_paid: isPaid,
@@ -152,7 +163,7 @@ export default defineEventHandler(async (event): Promise<PatreonSyncResult> => {
                 external_url: externalUrl,
                 tags: isPaid ? ['patreon', 'early-access'] : ['patreon', 'free-update'],
                 published_at: item.attributes.published_at,
-                is_published: true,
+                is_published: existing ? existing.is_published : true,
                 metadata: {
                     patreon_post_id: item.id,
                     synced_at: new Date().toISOString()

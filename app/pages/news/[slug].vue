@@ -1,5 +1,7 @@
 <script setup lang="ts">
-import type { Database, StudioPost } from '~/types/database.types';
+import { formatPlainSummary } from '~/composables/useStudioData';
+import type { Database } from '~/types/database.types';
+import type { StudioPost } from '~/types/studio.types';
 
 const route = useRoute();
 const slug = String(route.params.slug);
@@ -8,10 +10,10 @@ const { lang } = useLocale();
 
 const { data: post } = await useAsyncData<StudioPost | null>(`news-${slug}`, async () => {
   const { data } = await supabase
-    .from('studio_posts')
-    .select('*')
-    .eq('slug', slug)
-    .maybeSingle();
+      .from('studio_posts')
+      .select('*')
+      .eq('slug', slug)
+      .maybeSingle();
   return data;
 });
 
@@ -20,9 +22,16 @@ if (!post.value) {
 }
 
 useSeoMeta({
-  title: () => (lang.value === 'it' ? post.value?.title_it || '' : post.value?.title_en || ''),
+  title: () =>
+      lang.value === 'it'
+          ? post.value?.title_it || post.value?.title_en || ''
+          : post.value?.title_en || post.value?.title_it || '',
   description: () =>
-    lang.value === 'it' ? post.value?.summary_it || '' : post.value?.summary_en || ''
+      formatPlainSummary(
+          lang.value === 'it'
+              ? post.value?.summary_it || post.value?.summary_en || ''
+              : post.value?.summary_en || post.value?.summary_it || ''
+      )
 });
 </script>
 
