@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { asStringArray, type StudioPost } from '~/types/studio.types';
+import { buildReferralUrl, EXTERNAL_LINK_REL } from '~/utils/referral';
 
 const props = defineProps<{
   post: StudioPost;
@@ -8,6 +9,10 @@ const props = defineProps<{
 const { lang, t } = useLocale();
 
 const isPatreon = computed(() => props.post.platform === 'patreon');
+
+const patreonHref = computed(() =>
+    buildReferralUrl(props.post.external_url, 'news_detail', props.post.slug)
+);
 
 const displayTitle = computed(() =>
     lang.value === 'it'
@@ -47,10 +52,10 @@ const formattedDate = computed(() =>
 
       <div class="flex flex-wrap items-center gap-2">
         <a
-            v-if="isPatreon && post.external_url"
-            :href="post.external_url"
+            v-if="isPatreon && patreonHref"
+            :href="patreonHref"
             target="_blank"
-            rel="noopener noreferrer"
+            :rel="EXTERNAL_LINK_REL"
             class="rounded-xl border border-rose-500/35 bg-rose-500/15 px-3.5 py-1.5 text-xs font-semibold text-rose-100 transition hover:bg-rose-500/25"
         >
           {{ t('Open on Patreon ↗', 'Apri su Patreon ↗') }}
@@ -143,7 +148,7 @@ const formattedDate = computed(() =>
 
     <!-- Direct Patreon CTA for Synced Posts -->
     <div
-        v-if="isPatreon && post.external_url"
+        v-if="isPatreon && patreonHref"
         class="mt-8 flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-rose-500/35 bg-rose-500/10 p-6"
     >
       <div class="space-y-1">
@@ -161,9 +166,9 @@ const formattedDate = computed(() =>
       </div>
 
       <a
-          :href="post.external_url"
+          :href="patreonHref"
           target="_blank"
-          rel="noopener noreferrer"
+          :rel="EXTERNAL_LINK_REL"
           class="inline-flex shrink-0 items-center gap-2 rounded-xl border border-rose-400/45 bg-rose-500/20 px-5 py-3 text-xs font-bold text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.18)] transition hover:bg-rose-500/30"
       >
         <span>{{

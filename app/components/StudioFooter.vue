@@ -4,14 +4,27 @@ import {
   DEFAULT_PATREON_URL,
   useStudioSettings
 } from '~/composables/useStudioData';
+import { buildReferralUrl, EXTERNAL_LINK_REL } from '~/utils/referral';
 
 const { t } = useLocale();
 const { data: settings } = useStudioSettings();
 const user = useSupabaseUser();
 
 const brandName = computed(() => settings.value?.brand_name || 'Artek Medical');
-const patreonUrl = computed(() => settings.value?.patreon_url || DEFAULT_PATREON_URL);
-const curseforgeUrl = computed(() => settings.value?.curseforge_url || DEFAULT_CURSEFORGE_URL);
+const patreonUrl = computed(() =>
+    buildReferralUrl(
+        settings.value?.patreon_url || DEFAULT_PATREON_URL,
+        'footer_link',
+        'patreon'
+    )
+);
+const curseforgeUrl = computed(() =>
+    buildReferralUrl(
+        settings.value?.curseforge_url || DEFAULT_CURSEFORGE_URL,
+        'footer_link',
+        'curseforge'
+    )
+);
 const currentYear = new Date().getFullYear();
 </script>
 
@@ -60,7 +73,7 @@ const currentYear = new Date().getFullYear();
           <a
               :href="curseforgeUrl"
               target="_blank"
-              rel="noopener noreferrer"
+              :rel="EXTERNAL_LINK_REL"
               class="rounded-lg border border-amber-400/35 bg-amber-500/10 px-3 py-1.5 font-semibold text-amber-200 transition hover:bg-amber-500/20"
           >
             CurseForge ↗
@@ -68,7 +81,7 @@ const currentYear = new Date().getFullYear();
           <a
               :href="patreonUrl"
               target="_blank"
-              rel="noopener noreferrer"
+              :rel="EXTERNAL_LINK_REL"
               class="rounded-lg border border-cyan-500/30 bg-cyan-500/10 px-3 py-1.5 font-semibold text-cyan-300 transition hover:bg-cyan-500/20"
           >
             Patreon ↗

@@ -1,17 +1,26 @@
 <script setup lang="ts">
-import {DEFAULT_PATREON_URL} from "~/composables/useStudioData.ts";
+import { DEFAULT_PATREON_URL } from '~/composables/useStudioData';
+import { buildReferralUrl, EXTERNAL_LINK_REL } from '~/utils/referral';
 
 const { t } = useLocale();
 const { data: settings } = useStudioSettings();
 
-const patreonUrl = computed(() => settings.value?.patreon_url || DEFAULT_PATREON_URL);
+const patreonUrl = computed(() =>
+    buildReferralUrl(
+        settings.value?.patreon_url || DEFAULT_PATREON_URL,
+        'clinic_banner',
+        'playable-medical-clinic'
+    )
+);
 </script>
 
 <template>
   <aside
       class="rounded-2xl border border-cyan-500/30 bg-gradient-to-br from-cyan-500/10 via-clinical-surface/90 to-clinical-canvas p-5"
   >
-    <div class="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-wider text-cyan-300">
+    <div
+        class="flex items-center gap-2 font-mono text-[11px] font-bold uppercase tracking-wider text-cyan-300"
+    >
       <ArtekIcons name="HospitalOutline" size="sm" color="cyan" />
       <span>{{ t('Flagship Project • Coming Soon', 'Progetto di Punta • In Arrivo') }}</span>
     </div>
@@ -33,7 +42,7 @@ const patreonUrl = computed(() => settings.value?.patreon_url || DEFAULT_PATREON
       <a
           :href="patreonUrl"
           target="_blank"
-          rel="noopener noreferrer"
+          :rel="EXTERNAL_LINK_REL"
           class="inline-flex items-center justify-center gap-2 rounded-xl bg-clinical-teal px-4 py-2.5 text-xs font-bold text-white shadow-[0_0_20px_rgba(8,145,178,0.3)] transition hover:bg-cyan-500"
       >
         <ArtekIcons name="StethoscopeOutline" size="sm" color="white" />

@@ -8,6 +8,7 @@ import {
   useStudioSettings
 } from '~/composables/useStudioData';
 import { asStringArray, type StudioPost, type StudioProject } from '~/types/studio.types';
+import { buildReferralUrl, EXTERNAL_LINK_REL } from '~/utils/referral';
 
 const props = defineProps<{
   project: StudioProject;
@@ -21,8 +22,16 @@ const user = useSupabaseUser();
 const displayTitle = computed(() => getProjectTitle(props.project, lang.value));
 const displaySummary = computed(() => getProjectSummary(props.project, lang.value));
 
-const patreonTargetUrl = computed(
-    () => props.project.patreon_url || settings.value?.patreon_url || DEFAULT_PATREON_URL
+const curseforgeTargetUrl = computed(() =>
+    buildReferralUrl(props.project.curseforge_url, 'mod_detail', props.project.slug)
+);
+
+const patreonTargetUrl = computed(() =>
+    buildReferralUrl(
+        props.project.patreon_url || settings.value?.patreon_url || DEFAULT_PATREON_URL,
+        'mod_detail',
+        props.project.slug
+    )
 );
 
 const patreonCtaLabel = computed(() => {
@@ -125,10 +134,10 @@ const galleryImages = computed(() => {
 
           <div class="grid gap-2.5">
             <a
-                v-if="project.curseforge_url"
-                :href="project.curseforge_url"
+                v-if="curseforgeTargetUrl"
+                :href="curseforgeTargetUrl"
                 target="_blank"
-                rel="noopener noreferrer"
+                :rel="EXTERNAL_LINK_REL"
                 class="inline-flex items-center justify-between gap-2 rounded-xl border border-amber-400/50 bg-amber-500/20 px-4 py-3 text-sm font-bold text-amber-100 shadow-[0_0_20px_rgba(245,158,11,0.16)] transition hover:bg-amber-500/30"
             >
               <span>CurseForge</span>
@@ -151,7 +160,7 @@ const galleryImages = computed(() => {
             <a
                 :href="patreonTargetUrl"
                 target="_blank"
-                rel="noopener noreferrer"
+                :rel="EXTERNAL_LINK_REL"
                 class="inline-flex items-center justify-between gap-2 rounded-xl border border-rose-400/45 bg-rose-500/20 px-4 py-3 text-sm font-bold text-rose-100 shadow-[0_0_20px_rgba(244,63,94,0.16)] transition hover:bg-rose-500/30"
             >
               <span>Patreon</span>

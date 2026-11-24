@@ -1,12 +1,20 @@
 <script setup lang="ts">
+import { AGENCY_LINK_REL, buildReferralUrl } from '~/utils/referral';
+
 const { t } = useLocale();
+
+const agencyUrl = buildReferralUrl(
+    'https://ahd-creative.agency',
+    'footer_agency',
+    'ahd-logo'
+);
 </script>
 
 <template>
   <a
-      href="https://ahd-creative.agency"
+      :href="agencyUrl"
       target="_blank"
-      rel="noopener noreferrer"
+      :rel="AGENCY_LINK_REL"
       class="group inline-flex items-center gap-3 rounded-2xl border border-[#84cc16]/30 bg-clinical-canvas/75 px-4 py-2.5 transition-colors hover:border-[#84cc16]/65 hover:bg-clinical-canvas"
   >
     <div

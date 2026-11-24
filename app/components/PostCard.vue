@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { DEFAULT_PATREON_URL, formatPlainSummary } from '~/composables/useStudioData';
 import type { StudioPost } from '~/types/studio.types';
+import { buildReferralUrl, EXTERNAL_LINK_REL } from '~/utils/referral';
 
 const props = defineProps<{
   post: StudioPost;
@@ -12,7 +13,11 @@ const isPatreon = computed(() => props.post.platform === 'patreon');
 
 const cardHref = computed(() => {
   if (isPatreon.value) {
-    return props.post.external_url || DEFAULT_PATREON_URL;
+    return buildReferralUrl(
+        props.post.external_url || DEFAULT_PATREON_URL,
+        'news_card',
+        props.post.slug
+    );
   }
   return `/news/${props.post.slug}`;
 });
@@ -58,7 +63,7 @@ const ctaLabel = computed(() => {
         :to="cardHref"
         :external="isPatreon"
         :target="isPatreon ? '_blank' : undefined"
-        :rel="isPatreon ? 'noopener noreferrer' : undefined"
+        :rel="isPatreon ? EXTERNAL_LINK_REL : undefined"
         class="relative block aspect-video w-full overflow-hidden bg-clinical-canvas"
     >
       <img
@@ -124,7 +129,7 @@ const ctaLabel = computed(() => {
           :to="cardHref"
           :external="isPatreon"
           :target="isPatreon ? '_blank' : undefined"
-          :rel="isPatreon ? 'noopener noreferrer' : undefined"
+          :rel="isPatreon ? EXTERNAL_LINK_REL : undefined"
           class="block space-y-2"
       >
         <div class="flex items-center gap-1.5 text-xs text-slate-400">
@@ -157,7 +162,7 @@ const ctaLabel = computed(() => {
             :to="cardHref"
             :external="isPatreon"
             :target="isPatreon ? '_blank' : undefined"
-            :rel="isPatreon ? 'noopener noreferrer' : undefined"
+            :rel="isPatreon ? EXTERNAL_LINK_REL : undefined"
             class="font-semibold transition"
             :class="
             isPatreon

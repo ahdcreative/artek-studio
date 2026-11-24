@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import {DEFAULT_PATREON_URL} from "~/composables/useStudioData.ts";
+import { DEFAULT_PATREON_URL } from '~/composables/useStudioData';
+import { buildReferralUrl, EXTERNAL_LINK_REL } from '~/utils/referral';
 
 const { lang, toggleLang, t } = useLocale();
 const { data: settings } = useStudioSettings();
@@ -7,7 +8,13 @@ const user = useSupabaseUser();
 const route = useRoute();
 const mobileOpen = ref(false);
 
-const patreonUrl = computed(() => settings.value?.patreon_url || DEFAULT_PATREON_URL);
+const basePatreonUrl = computed(() => settings.value?.patreon_url || DEFAULT_PATREON_URL);
+const patreonDesktopUrl = computed(() =>
+    buildReferralUrl(basePatreonUrl.value, 'header_cta', 'patreon-desktop')
+);
+const patreonMobileUrl = computed(() =>
+    buildReferralUrl(basePatreonUrl.value, 'header_cta', 'patreon-mobile')
+);
 const brandName = computed(() => settings.value?.brand_name || 'Artek Medical');
 
 const navItems = computed(() => {
@@ -94,9 +101,9 @@ watch(
         </button>
 
         <a
-            :href="patreonUrl"
+            :href="patreonDesktopUrl"
             target="_blank"
-            rel="noopener noreferrer"
+            :rel="EXTERNAL_LINK_REL"
             class="hidden items-center gap-2 rounded-xl bg-clinical-teal px-3.5 py-2 text-xs font-semibold text-white shadow-[0_0_20px_rgba(8,145,178,0.35)] transition hover:bg-cyan-500 sm:inline-flex"
         >
           <ArtekIcons name="StethoscopeOutline" size="sm" color="white" />
@@ -131,9 +138,9 @@ watch(
           <span>{{ item.label }}</span>
         </NuxtLink>
         <a
-            :href="patreonUrl"
+            :href="patreonMobileUrl"
             target="_blank"
-            rel="noopener noreferrer"
+            :rel="EXTERNAL_LINK_REL"
             class="mt-2 inline-flex items-center justify-center gap-2 rounded-xl bg-clinical-teal px-3.5 py-2.5 text-xs font-semibold text-white"
         >
           <ArtekIcons name="StethoscopeOutline" size="sm" color="white" />

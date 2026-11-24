@@ -6,13 +6,28 @@ import {
   useStudioProjects,
   useStudioSettings
 } from '~/composables/useStudioData';
+import { buildReferralUrl, EXTERNAL_LINK_REL } from '~/utils/referral';
 
 const { lang, t } = useLocale();
 const { data: settings } = useStudioSettings();
 const { data: projects } = useStudioProjects();
 
-const patreonUrl = computed(() => settings.value?.patreon_url || DEFAULT_PATREON_URL);
-const curseforgeUrl = computed(() => settings.value?.curseforge_url || DEFAULT_CURSEFORGE_URL);
+const patreonUrl = computed(() =>
+    buildReferralUrl(
+        settings.value?.patreon_url || DEFAULT_PATREON_URL,
+        'hero_cta',
+        'patreon'
+    )
+);
+
+const curseforgeUrl = computed(() =>
+    buildReferralUrl(
+        settings.value?.curseforge_url || DEFAULT_CURSEFORGE_URL,
+        'hero_cta',
+        'curseforge'
+    )
+);
+
 const downloadsLabel = computed(() => getStudioDownloadsLabel(settings.value));
 
 const stats = computed(() => {
@@ -69,7 +84,9 @@ const stats = computed(() => {
           </div>
 
           <div class="space-y-2.5">
-            <h1 class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-tight">
+            <h1
+                class="text-3xl font-extrabold tracking-tight text-white sm:text-4xl lg:text-[2.75rem] lg:leading-tight"
+            >
               {{ settings?.brand_name ?? 'Artek Medical' }}
             </h1>
             <p class="text-base font-medium text-cyan-200/90 sm:text-lg">
@@ -105,7 +122,7 @@ const stats = computed(() => {
             <a
                 :href="patreonUrl"
                 target="_blank"
-                rel="noopener noreferrer"
+                :rel="EXTERNAL_LINK_REL"
                 class="inline-flex items-center justify-center gap-2 rounded-xl border border-rose-400/40 bg-rose-500/15 px-5 py-2.5 text-sm font-bold text-rose-100 transition hover:bg-rose-500/25"
             >
               <span>{{ t('Follow FREE on Patreon ↗', 'Segui GRATIS su Patreon ↗') }}</span>
@@ -114,7 +131,7 @@ const stats = computed(() => {
             <a
                 :href="curseforgeUrl"
                 target="_blank"
-                rel="noopener noreferrer"
+                :rel="EXTERNAL_LINK_REL"
                 class="inline-flex items-center justify-center gap-2 rounded-xl border border-amber-400/35 bg-amber-500/10 px-5 py-2.5 text-sm font-semibold text-amber-200 transition hover:bg-amber-500/20"
             >
               <span>{{ t('CurseForge Catalog ↗', 'Catalogo CurseForge ↗') }}</span>

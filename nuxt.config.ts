@@ -14,8 +14,38 @@ export default defineNuxtConfig({
     '@nuxt/image'
   ],
 
+  site: {
+    url: 'https://art3k.org',
+    name: 'Artek Medical'
+  },
+
+  app: {
+    head: {
+      link: [
+        { rel: 'icon', type: 'image/svg+xml', href: '/favicon.svg' },
+        { rel: 'icon', type: 'image/png', sizes: '96x96', href: '/favicon-96x96.png' },
+        { rel: 'icon', type: 'image/x-icon', href: '/favicon.ico' },
+        { rel: 'apple-touch-icon', sizes: '180x180', href: '/apple-touch-icon.png' },
+        { rel: 'manifest', href: '/site.webmanifest' }
+      ],
+      meta: [
+        { name: 'theme-color', content: '#070f17' },
+        { name: 'apple-mobile-web-app-title', content: 'Artek Medical' }
+      ]
+    }
+  },
+
+  robots: {
+    disallow: ['/admin', '/admin/**', '/api/**']
+  },
+
+  sitemap: {
+    sources: ['/api/__sitemap__/urls'],
+    exclude: ['/admin', '/admin/**']
+  },
+
   runtimeConfig: {
-    supabaseStorageBucket: 'preview',
+    supabaseStorageBucket: 'previews',
     patreonClientId: '',
     patreonClientSecret: '',
     patreonAccessToken: '',

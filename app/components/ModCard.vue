@@ -6,6 +6,7 @@ import {
   getStatusLabel
 } from '~/composables/useStudioData';
 import type { StudioProject } from '~/types/studio.types';
+import { buildReferralUrl, EXTERNAL_LINK_REL } from '~/utils/referral';
 
 const props = defineProps<{
   project: StudioProject;
@@ -15,6 +16,14 @@ const { lang, t } = useLocale();
 
 const displayTitle = computed(() => getProjectTitle(props.project, lang.value));
 const displaySummary = computed(() => getProjectSummary(props.project, lang.value));
+
+const curseforgeHref = computed(() =>
+    buildReferralUrl(props.project.curseforge_url, 'mod_card', props.project.slug)
+);
+
+const patreonHref = computed(() =>
+    buildReferralUrl(props.project.patreon_url, 'mod_card', props.project.slug)
+);
 </script>
 
 <template>
@@ -99,10 +108,10 @@ const displaySummary = computed(() => getProjectSummary(props.project, lang.valu
       >
         <div class="flex flex-wrap items-center gap-1.5">
           <a
-              v-if="project.curseforge_url"
-              :href="project.curseforge_url"
+              v-if="curseforgeHref"
+              :href="curseforgeHref"
               target="_blank"
-              rel="noopener noreferrer"
+              :rel="EXTERNAL_LINK_REL"
               class="inline-flex items-center gap-1 rounded-lg border border-amber-400/40 bg-amber-500/15 px-2.5 py-1 text-[11px] font-semibold text-amber-200 transition hover:bg-amber-500/25"
           >
             <span>CurseForge</span>
@@ -110,10 +119,10 @@ const displaySummary = computed(() => getProjectSummary(props.project, lang.valu
           </a>
 
           <a
-              v-if="project.patreon_url"
-              :href="project.patreon_url"
+              v-if="patreonHref"
+              :href="patreonHref"
               target="_blank"
-              rel="noopener noreferrer"
+              :rel="EXTERNAL_LINK_REL"
               class="inline-flex items-center gap-1 rounded-lg border border-rose-400/40 bg-rose-500/15 px-2.5 py-1 text-[11px] font-semibold text-rose-200 transition hover:bg-rose-500/25"
           >
             <span>{{ project.is_early_access ? 'Early Access' : 'Patreon' }}</span>
@@ -121,7 +130,7 @@ const displaySummary = computed(() => getProjectSummary(props.project, lang.valu
           </a>
 
           <span
-              v-if="!project.curseforge_url && !project.patreon_url"
+              v-if="!curseforgeHref && !patreonHref"
               class="inline-flex items-center rounded-lg border border-clinical-border/80 bg-clinical-canvas/60 px-2 py-1 text-[10px] font-medium text-slate-400"
           >
             {{ t('In Development', 'In Sviluppo') }}

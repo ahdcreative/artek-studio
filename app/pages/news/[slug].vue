@@ -31,7 +31,8 @@ useSeoMeta({
           lang.value === 'it'
               ? post.value?.summary_it || post.value?.summary_en || ''
               : post.value?.summary_en || post.value?.summary_it || ''
-      )
+      ),
+  robots: () => (post.value?.platform === 'patreon' ? 'noindex, follow' : 'index, follow')
 });
 </script>
 
